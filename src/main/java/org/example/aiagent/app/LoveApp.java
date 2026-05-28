@@ -4,6 +4,7 @@ import com.alibaba.cloud.ai.graph.node.QuestionClassifierNode;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.example.aiagent.advisor.MyLoggerAdvisor;
+import org.example.aiagent.rag.QueryRewriter;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
 import org.springframework.ai.chat.client.advisor.api.Advisor;
@@ -30,8 +31,8 @@ public class LoveApp {
     private Advisor loveAppRagCloudAdvisor;
     @Resource
     private VectorStore pgVectorVectorStore;
-//    @Resource
-//    private QueryRewriter queryRewriter;
+    @Resource
+    private QueryRewriter queryRewriter;
 
 
     private static final String SYSTEM_PROMPT = "扮演深耕恋爱心理领域的专家。开场向用户表明身份，告知用户可倾诉恋爱难题。" +
@@ -111,8 +112,10 @@ public class LoveApp {
      * @return
      */
     public String doChatWithRage(String message , String chatId){
+        //查询重写
+        String rewrittenMesasage = queryRewriter.doQueryRewrite(message);
         ChatResponse chatResponse = chatClient.prompt()
-                .user(message)
+                .user(rewrittenMesasage)
                 .advisors(spec -> spec.param(ChatMemory.CONVERSATION_ID, chatId))
                 .advisors(new MyLoggerAdvisor())//日志
                 //应用 RAG 知识库问答
