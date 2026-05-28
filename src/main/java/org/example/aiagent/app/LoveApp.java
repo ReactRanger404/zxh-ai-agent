@@ -1,5 +1,6 @@
 package org.example.aiagent.app;
 
+import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.example.aiagent.advisor.MyLoggerAdvisor;
 import org.springframework.ai.chat.client.ChatClient;
@@ -9,6 +10,8 @@ import org.springframework.ai.chat.memory.InMemoryChatMemoryRepository;
 import org.springframework.ai.chat.memory.MessageWindowChatMemory;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
+import org.springframework.ai.vectorstore.VectorStore;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -18,6 +21,8 @@ import java.util.List;
 public class LoveApp {
 
     private final ChatClient chatClient;
+    @Resource
+    private VectorStore loveAppVectorStore;
 
     private static final String SYSTEM_PROMPT = "扮演深耕恋爱心理领域的专家。开场向用户表明身份，告知用户可倾诉恋爱难题。" +
             "围绕单身、恋爱、已婚三种状态提问" +
@@ -31,6 +36,9 @@ public class LoveApp {
      * @param dashscopeChatModel
      */
     public LoveApp(ChatModel dashscopeChatModel) {
+//        // 初始化基于文件的对话记忆
+//        String fileDir = System.getProperty("user.dir") + "/tmp/chat-memory";
+//        ChatMemory chatMemory = new FileBasedChatMemory(fileDir);
         //基于内存的对话记忆
         // 1. 构建对话记忆对象 ( 存储介质 + 记忆策略 )
         ChatMemory chatMemory = MessageWindowChatMemory.builder()
@@ -84,6 +92,26 @@ public class LoveApp {
                 .entity(LoveReport.class);
         log.info("loveReport:{}",loveReport);
         return loveReport;
+    }
+
+    /**
+     * 和 Rag 知识库进行对话
+     * @param message
+     * @param chatId
+     * @return
+     */
+    public String doChatWithRage(String message , String chatId){
+        ChatResponse chatResponse = chatClient.prompt()
+                .user(message)
+                .advisors(spec -> spec.param(ChatMemory.CONVERSATION_ID, chatId))
+                .advisors(new MyLoggerAdvisor())//日志
+                //应用 RAG 知识库问答
+                .advisors(new QuestionAnswerAdvisor(loveAppVectorStore))
+                .call()
+                .chatResponse();
+        String content= chatResponse.getResult().getOutput().getText();
+        log.info("content:{}",content);
+        return content;
     }
 
 
