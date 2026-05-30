@@ -8,7 +8,7 @@ import org.springframework.ai.rag.preretrieval.query.transformation.RewriteQuery
 import org.springframework.stereotype.Component;
 
 /**
- * 查询重写器--让用户的问题变得更加专业
+ * 查询重写器--让用户的问题通过ai变得更加专业
  */
 @Component
 public class QueryRewriter {

@@ -97,6 +97,7 @@ public class FileBasedChatMemory implements ChatMemory {
      * @return
      */
     private File getConversationFile(String conversationId) {
+
         return new File(BASE_DIR, conversationId + ".kryo");
     }
 }
