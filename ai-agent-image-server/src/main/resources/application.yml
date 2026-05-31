@@ -1,0 +1,8 @@
+spring:
+  application:
+    name: ai-agent-image-server
+  profiles:
+    active: stdio
+  # active: sse
+server:
+  port: 8127

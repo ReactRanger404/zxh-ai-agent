@@ -5,10 +5,10 @@ spring:
   profiles:
     active: local
 
-  datasource:
-    url: jdbc:postgresql://rm-cn-ai54sx8rs00012ro.rwlb.rds.aliyuncs.com:5432/ai_agent
-    username: my_user
-    password: 20050828zxhH_
+#  datasource:
+#    url: jdbc:postgresql://rm-cn-ai54sx8rs00012ro.rwlb.rds.aliyuncs.com:5432/ai_agent
+#    username: my_user
+#    password: 20050828zxhH_
   ai:
     vectorstore:
       pgvector:
@@ -16,6 +16,15 @@ spring:
         dimensions: 1536
         distance-type: COSINE_DISTANCE
         max-document-batch-size: 10000
+    mcp:
+      client:
+        stdio:
+          servers-configuration: classpath:mcp-servers.json
+    #      client:
+    #        sse:
+    #          connections:
+    #            server1:
+    #              url: http://localhost:8127
 
 server:
   port: 8123

@@ -166,6 +166,11 @@
             <version>9.1.0</version>
             <scope>test</scope>
         </dependency>
+        <!-- Spring AI MCP Client -->
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-starter-mcp-client</artifactId>
+        </dependency>
     </dependencies>
 
     <build>
