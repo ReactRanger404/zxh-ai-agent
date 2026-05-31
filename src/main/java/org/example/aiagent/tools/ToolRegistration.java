@@ -4,10 +4,12 @@ import org.springframework.ai.support.ToolCallbacks;
 import org.springframework.ai.tool.ToolCallback;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 
 /**
  * 集中的工具注册类
  */
+@Configuration
 public class ToolRegistration {
     @Value("${search-api.apikey}")
     private String searchApiKey;
@@ -20,7 +22,7 @@ public class ToolRegistration {
         ResourceDownloadTool resourceDownloadTool = new ResourceDownloadTool();
         TerminalOperationTool terminalOperationTool = new TerminalOperationTool();
         PDFGenerationTool pdfGenerationTool = new PDFGenerationTool();
-        //TerminateTool terminateTool = new TerminateTool();
+        TerminateTool terminateTool = new TerminateTool();
 
         return ToolCallbacks.from(
                 fileOperationTool,
@@ -28,8 +30,8 @@ public class ToolRegistration {
                 webScrapingTool,
                 resourceDownloadTool,
                 terminalOperationTool,
-                pdfGenerationTool
-                //terminateTool
+                pdfGenerationTool,
+                terminateTool
         );
     }
 }
