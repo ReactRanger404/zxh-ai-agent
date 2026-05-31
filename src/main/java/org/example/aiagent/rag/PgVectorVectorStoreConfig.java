@@ -31,8 +31,8 @@ public class PgVectorVectorStoreConfig {
                 .vectorTableName("vector_store")     // Optional: defaults to "vector_store"
                 .maxDocumentBatchSize(10000)         // Optional: defaults to 10000
                 .build();
-        //List<Document> documents = loveAppDocumentLoader.loadMarkdowns();
-        //vectorStore.add(documents);
+        List<Document> documents = loveAppDocumentLoader.loadDocuments();
+        vectorStore.add(documents);
         return vectorStore;
     }
 }
