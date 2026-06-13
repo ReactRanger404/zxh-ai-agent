@@ -1,19 +1,24 @@
 package org.example.aiagent.controller;
 
+
+import cn.hutool.core.util.StrUtil;
 import jakarta.annotation.Resource;
 import org.example.aiagent.agent.Manus;
 import org.example.aiagent.app.LoveApp;
+import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.tool.ToolCallback;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.MediaType;
 import org.springframework.http.codec.ServerSentEvent;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import reactor.core.publisher.Flux;
 
 import java.io.IOException;
+import java.net.URI;
+import java.util.concurrent.CompletableFuture;
 
 @RestController
 @RequestMapping("/ai")
@@ -102,5 +107,85 @@ public class AiController {
     public SseEmitter doChatWithManus(String message) {
         Manus yuManus = new Manus(allTools, dashscopeChatModel);
         return yuManus.runStream(message);
+    }
+
+
+    @Resource
+    private ChatClient visionChatClient;
+
+    /**
+     * 多模态对话（通过图片 URL）
+     * GET /api/ai/vision/chat?message=描述一下&imageUrl=https://...
+     */
+    @GetMapping("/vision/chat")
+    public SseEmitter doChatWithVision(
+            @RequestParam String message,
+            @RequestParam(required = false) String imageUrl) {
+        SseEmitter emitter = new SseEmitter(180000L);
+        CompletableFuture.runAsync(() -> {
+            try {
+                var spec = visionChatClient.prompt().user(u -> {
+                    u.text(message);
+                    if (StrUtil.isNotBlank(imageUrl)) {
+                        try {
+                            u.media(MediaType.IMAGE_JPEG, URI.create(imageUrl).toURL());
+                        } catch (java.net.MalformedURLException e) {
+                            u.text("\n[图片URL格式错误]");
+                        }
+                    }
+                });
+                spec.stream().content().subscribe(
+                        chunk -> {
+                            try {
+                                emitter.send(chunk);
+                            } catch (IOException e) {
+                                emitter.completeWithError(e);
+                            }
+                        },
+                        emitter::completeWithError,
+                        emitter::complete
+                );
+            } catch (Exception e) {
+                try {
+                    emitter.send("处理失败: " + e.getMessage());
+                    emitter.complete();
+                } catch (IOException ignored) {
+                }
+            }
+        });
+        return emitter;
+    }
+
+    /**
+     * 多模态对话（前端上传图片文件）
+     * POST /api/ai/vision/chat/upload  multipart/form-data
+     * 字段: message, file
+     */
+    @PostMapping(value = "/vision/chat/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public SseEmitter doChatWithVisionUpload(
+            @RequestParam String message,
+            @RequestParam(required = false) MultipartFile file) {
+        SseEmitter emitter = new SseEmitter(180000L);
+        CompletableFuture.runAsync(() -> {
+            try {
+                visionChatClient.prompt().user(u -> {
+                    u.text(message);
+                    if (file != null && !file.isEmpty()) {
+                        try {
+                            u.media(MediaType.IMAGE_JPEG, new ByteArrayResource(file.getBytes()));
+                        } catch (IOException e) {
+                            u.text("\n[图片读取失败: " + e.getMessage() + "]");
+                        }
+                    }
+                }).stream().content().subscribe(
+                        chunk -> { try { emitter.send(chunk); } catch (IOException e) { emitter.completeWithError(e); } },
+                        emitter::completeWithError,
+                        emitter::complete
+                );
+            } catch (Exception e) {
+                try { emitter.send("处理失败: " + e.getMessage()); emitter.complete(); } catch (IOException ignored) {}
+            }
+        });
+        return emitter;
     }
 }
