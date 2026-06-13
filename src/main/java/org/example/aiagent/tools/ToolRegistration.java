@@ -15,7 +15,7 @@ public class ToolRegistration {
     private String searchApiKey;
 
     @Bean
-    public ToolCallback[] allTools(){
+    public ToolCallback[] allTools(SpeechRecognitionTool speechRecognitionTool){
         FileOperationTool fileOperationTool = new FileOperationTool();
         WebSearchTool webSearchTool = new WebSearchTool(searchApiKey);
         WebScrapingTool webScrapingTool = new WebScrapingTool();
@@ -31,6 +31,7 @@ public class ToolRegistration {
                 resourceDownloadTool,
                 terminalOperationTool,
                 pdfGenerationTool,
+                speechRecognitionTool,
                 terminateTool
         );
     }
